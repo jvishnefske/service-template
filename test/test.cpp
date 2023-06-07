@@ -8,7 +8,7 @@
 
 TEST(backendTests, createInstance){
     backend b;
-    ASSERT_DOUBLE_EQ(0, b.value);
+    ASSERT_DOUBLE_EQ(0.0, b.value);
 }
 
 
