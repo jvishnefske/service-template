@@ -7,6 +7,8 @@
 
 
 class backend {
+public:
+    double value{};
 };
 
 
