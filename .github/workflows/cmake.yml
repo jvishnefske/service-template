@@ -2,7 +2,7 @@ name: CMake
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
   pull_request:
     branches: [ "main" ]
 
@@ -25,10 +25,17 @@ jobs:
       with:
         repository: microsoft/vcpkg
         path: ${{github.workspace}}/vcpkg-packages
-        
-    - name: vcpkg bootstrap
-      run:  cd ${{github.workspace}}/vcpkg-packages; pwd; ls ;./bootstrap-vcpkg.sh
-        
+
+    - uses: actions/cache@v3
+      id: cache
+      with:
+        path: ${{github.workspace}}/vcpkg-packages
+        key: ${{ runner.os }}-${{ hashFiles('**/vcpkg.json') }}
+
+    - name: vcpkg bootstrap and install dependencies
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: ${{github.workspace}}/vcpkg-packages/bootstrap-vcpkg.sh; ${{github.workspace}}/vcpkg-packages/vcpkg install
+
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
