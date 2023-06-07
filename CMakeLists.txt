@@ -16,9 +16,10 @@ target_include_directories(uwebsockets INTERFACE ${UWEBSOCKETS_INCLUDE_DIRS})
 add_library(uwebsockets::uwebsockets ALIAS uwebsockets)
 set(dependencies unofficial::sqlite3::sqlite3 spdlog::spdlog uwebsockets nlohmann_json::nlohmann_json)
 
-add_library(backend backend.cpp)
+add_library(backend src/backend.cpp)
+target_include_directories(backend PUBLIC include)
 target_link_libraries(backend PRIVATE ${dependencies})
-add_executable(main main.cpp)
+add_executable(main src/main.cpp)
 target_link_libraries(main PRIVATE backend)
 
 add_subdirectory(test)

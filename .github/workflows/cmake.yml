@@ -9,6 +9,7 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-archive
 
 jobs:
   build:
@@ -29,12 +30,11 @@ jobs:
     - uses: actions/cache@v3
       id: cache
       with:
-        path: ${{github.workspace}}/vcpkg-packages
-        key: ${{ runner.os }}-${{ hashFiles('**/vcpkg.json') }}
+        path: ${{env.VCPKG_DEFAULT_BINARY_CACHE}}
+        key: ${{ runner.os }}-${{runner.arch}}-${{ hashFiles('**/vcpkg.json') }}
 
     - name: vcpkg bootstrap and install dependencies
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: ${{github.workspace}}/vcpkg-packages/bootstrap-vcpkg.sh; ${{github.workspace}}/vcpkg-packages/vcpkg install
+      run: mkdir -p ${{env.VCPKG_DEFAULT_BINARY_CACHE}}; ${{github.workspace}}/vcpkg-packages/bootstrap-vcpkg.sh; ${{github.workspace}}/vcpkg-packages/vcpkg install
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
