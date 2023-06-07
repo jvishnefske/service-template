@@ -17,7 +17,7 @@ add_library(uwebsockets::uwebsockets ALIAS uwebsockets)
 set(dependencies unofficial::sqlite3::sqlite3 spdlog::spdlog uwebsockets nlohmann_json::nlohmann_json)
 
 add_library(backend backend.cpp)
-target_link_libraries(backend PRIVATE dependencies)
+target_link_libraries(backend PRIVATE ${dependencies})
 add_executable(main main.cpp)
 target_link_libraries(main PRIVATE backend)
 
