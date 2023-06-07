@@ -1,0 +1,10 @@
+{
+  "dependencies": [
+    "sqlite3",
+    "uwebsockets",
+    "spdlog",
+    "nlohmann-json",
+    "gtest",
+    "benchmark"
+  ]
+}
