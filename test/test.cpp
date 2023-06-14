@@ -13,7 +13,7 @@
 
 void PublisherThread(zmq::context_t &ctx, bool &keep_running) {
     //  Prepare publisher
-    zmq::socket_t publisher(*ctx, zmq::socket_type::pub);
+    zmq::socket_t publisher(ctx, zmq::socket_type::pub);
     publisher.bind("inproc://#1");
 
     // Give the subscribers a chance to connect, so they don't lose any messages
@@ -56,15 +56,15 @@ TEST(backendTests, simplePubsub) {
     zmq::socket_t sock(ctx, zmq::socket_type::pub);
     sock.bind("inproc://test");
     sock.send(zmq::str_buffer("Hello, world"), zmq::send_flags::dontwait);
-    auto pubTask = std::async([&ctx](){
+    auto pubTask = std::async(std::launch::async, [&ctx](){
         zmq::socket_t subSocket(ctx, zmq::socket_type::sub);
         zmq::message_t msg;
         subSocket.set(zmq::sockopt::subscribe, "topic1");
-        auto result = subSocket.recv(msg,zmq::recv_flags::none);
-        assert(result.has_value());
-        ASSERT_EQ(result.value(),"");
-        return std::string{};
+        auto result = subSocket.recv(msg,zmq::recv_flags::dontwait);
+        ASSERT_TRUE(result.has_value());
     });
+    auto future_status = pubTask.wait_for(std::chrono::milliseconds (1));
+    ASSERT_EQ(future_status, std::future_status::ready);
 }
 
 TEST(backendTests, actualPubSub){
@@ -74,14 +74,14 @@ TEST(backendTests, actualPubSub){
         return PublisherThread(ctx, keep_running);
     });
     //  Prepare subscriber
-    zmq::socket_t subscriber(*ctx, zmq::socket_type::sub);
+    zmq::socket_t subscriber(ctx, zmq::socket_type::sub);
     subscriber.connect("inproc://#1");
 
     //  Thread2 opens "A" and "B" envelopes
     subscriber.set(zmq::sockopt::subscribe, "A");
     subscriber.set(zmq::sockopt::subscribe, "B");
 
-    while (1) {
+    {
         // Receive all parts of the message
         std::vector<zmq::message_t> recv_msgs;
         zmq::recv_result_t result =
