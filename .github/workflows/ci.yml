@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "dev"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  BUILD_TYPE: Release
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-archive
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install coverage tools
+        run: sudo apt-get update && sudo apt-get install -y lcov
+
+      - name: Checkout vcpkg
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          path: vcpkg
+
+      - name: Cache vcpkg packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-vcpkg-${{ hashFiles('**/vcpkg.json') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-vcpkg-
+
+      - name: Bootstrap vcpkg and install dependencies
+        run: |
+          mkdir -p ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          ./vcpkg/bootstrap-vcpkg.sh
+          VCPKG_ROOT=${{ github.workspace }}/vcpkg make deps
+
+      - name: Build
+        run: VCPKG_ROOT=${{ github.workspace }}/vcpkg make build
+
+      - name: Test
+        run: VCPKG_ROOT=${{ github.workspace }}/vcpkg make test
+
+      - name: Coverage
+        run: VCPKG_ROOT=${{ github.workspace }}/vcpkg make coverage
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: build/coverage/
+          retention-days: 30
